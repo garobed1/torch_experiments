@@ -1,0 +1,264 @@
+close all
+clear all
+
+db = [0 0.0 0.75];
+dg = [0 0.5 0];
+dr = [0.75 0.0 0];
+
+% 1-3: "mean_dissipation","mean_pressure","mean_temperature",
+% 4-6: "mean_velocity:0","mean_velocity:1","mean_velocity:2",
+% 7-12: "vari_velocity:0","vari_velocity:1","vari_velocity:2","vari_velocity:3","vari_velocity:4","vari_velocity:5",
+% 13-18: "attribute","vtkValidPointMask","arc_length","Points:0","Points:1","Points:2"
+% vertical: 5
+% swirl: 6 (x files)
+% radius: 16 (x files)
+
+% bad piv range
+iToss = 30;
+
+yLine = 32.1;
+%yLine = 112.1;
+
+% 112p1.csv 132p1.csv 164p2.csv 184p2.csv 204p2.csv 32p1.csv  52p1.csv  72p1.csv  92p1.csv
+% targets: 32.1, 118.0, 200.0
+
+% angles
+simA = readtable('./dataLines/p1/0p0321.csv','NumHeaderLines',1);
+simB = readtable('./dataLines/p2/0p0321.csv','NumHeaderLines',1);
+simC = readtable('./dataLines/p2/0p0321.csv','NumHeaderLines',1);
+
+simA90 = readtable('./dataLines/p1/0p0321_90.csv','NumHeaderLines',1);
+simB90 = readtable('./dataLines/p2/0p0321_90.csv','NumHeaderLines',1);
+simC90 = readtable('./dataLines/p2/0p0321_90.csv','NumHeaderLines',1);
+
+
+xA = simA(:,16);
+xB = simB(:,16);
+xC = simC(:,16);
+
+xA = xA.*1000;
+xB = xB.*1000;
+xC = xC.*1000;
+
+yA = simA(:,15);
+yB = simB(:,15);
+yC = simC(:,15);
+
+yA = yA.*1000;
+yB = yB.*1000;
+yC = yC.*1000;
+
+vA = 0.25 .* (simA{:,5} + flip(simA90{:,5}) + flip(simA{:,5}) + simA90{:,5});
+vB = 0.25 .* (simB{:,5} + flip(simB90{:,5}) + flip(simB{:,5}) + simB90{:,5});
+vC = 0.25 .* (simC{:,5} + flip(simC90{:,5}) + flip(simC{:,5}) + simC90{:,5});
+
+wA = 0.25 .* (simA{:,6} - simA90{:,4}) - 0.25 .* flip(simA{:,6} - simA90{:,4});
+wB = 0.25 .* (simB{:,6} - simB90{:,4}) - 0.25 .* flip(simB{:,6} - simB90{:,4});
+wC = 0.25 .* (simC{:,6} - simC90{:,4}) - 0.25 .* flip(simC{:,6} - simC90{:,4});
+
+% PIV data
+dataBS = load('fullFlowfield/BelowStep.mat');
+dataBN = load('fullFlowfield/BelowNozzle.mat');
+dataAS = load('fullFlowfield/AboveStep.mat');
+dataAI = load('fullFlowfield/AboveInlet.mat');
+
+% goes from -111.1765 to ~140 
+unc = load('Uncertainty/Uncertainty.mat');
+
+yShift = 0.138201*1000;
+%yShift = 0.014351*1000;
+
+yAI = dataAI.AboveInlet.y;
+yAS = dataAS.AboveStep.y;
+yBN = dataBN.BelowNozzle.y;
+yBS = dataBS.BelowStep.y;
+
+xAI = dataAI.AboveInlet.x;
+xAS = dataAS.AboveStep.x;
+xBN = dataBN.BelowNozzle.x;
+xBS = dataBS.BelowStep.x;
+
+uUnc = (unc.U.zero.vx + unc.U.p60.vx + unc.U.m60.vx)/3.0;
+vUnc = (unc.U.zero.vy + unc.U.p60.vy + unc.U.m60.vy)/3.0;
+wUnc = (unc.U.zero.vz + unc.U.p60.vz + unc.U.m60.vz)/3.0;
+xUnc = unc.U.x;
+yUnc = unc.U.y + yShift;
+
+uAI = (dataAI.AboveInlet.zerodeg.vx + dataAI.AboveInlet.p60deg.vx + dataAI.AboveInlet.m60deg.vx)/3.0;
+uAS = (dataAS.AboveStep.zerodeg.vx + dataAS.AboveStep.p60deg.vx + dataAS.AboveStep.m60deg.vx)/3.0;
+uBN = (dataBN.BelowNozzle.zerodeg.vx + dataBN.BelowNozzle.p60deg.vx + dataBN.BelowNozzle.m60deg.vx)/3.0;
+uBS = (dataBS.BelowStep.zerodeg.vx + dataBS.BelowStep.p60deg.vx + dataBS.BelowStep.m60deg.vx)/3.0;
+
+vAI = (dataAI.AboveInlet.zerodeg.vy + dataAI.AboveInlet.p60deg.vy + dataAI.AboveInlet.m60deg.vy)/3.0;
+vAS = (dataAS.AboveStep.zerodeg.vy + dataAS.AboveStep.p60deg.vy + dataAS.AboveStep.m60deg.vy)/3.0;
+vBN = (dataBN.BelowNozzle.zerodeg.vy + dataBN.BelowNozzle.p60deg.vy + dataBN.BelowNozzle.m60deg.vy)/3.0;
+vBS = (dataBS.BelowStep.zerodeg.vy + dataBS.BelowStep.p60deg.vy + dataBS.BelowStep.m60deg.vy)/3.0;
+
+wAI = (dataAI.AboveInlet.zerodeg.vz + dataAI.AboveInlet.p60deg.vz + dataAI.AboveInlet.m60deg.vz)/3.0;
+wAS = (dataAS.AboveStep.zerodeg.vz + dataAS.AboveStep.p60deg.vz + dataAS.AboveStep.m60deg.vz)/3.0;
+wBN = (dataBN.BelowNozzle.zerodeg.vz + dataBN.BelowNozzle.p60deg.vz + dataBN.BelowNozzle.m60deg.vz)/3.0;
+wBS = (dataBS.BelowStep.zerodeg.vz + dataBS.BelowStep.p60deg.vz + dataBS.BelowStep.m60deg.vz)/3.0;
+
+yAI = yAI + yShift;
+yAS = yAS + yShift;
+yBN = yBN + yShift;
+yBS = yBS + yShift;
+
+%figure(10)
+%plot(yAI)
+%hold on
+%plot(yAS)
+%plot(yBN)
+%plot(yBS)
+%legend('AI','AS','BN','BS')
+
+if yLine >= min(yBN)
+    data = dataBN;
+    u = uAI;
+    v = vAI;
+    w = wAI;
+    y = yBN;
+    x = xBN;
+elseif yLine >= min(yAS)
+    data = dataAS;
+    u = uAS;
+    v = vAS;
+    w = wAS;
+    y = yAS;
+    x = xAS;
+elseif yLine >= min(yBS)
+    data = dataBS;
+    u = uBS;
+    v = vBS;
+    w = wBS;
+    y = yBS;
+    x = xBS;
+else
+    data = dataAI;
+    u = uAI;
+    v = vAI;
+    w = wAI;
+    y = yAI;
+    x = xAI;
+end
+
+%u = (data.AboveInlet.zerodeg.vx + data.AboveInlet.m60deg.vx + data.AboveInlet.p60deg.vx)/3.0; % radial
+%v = (data.AboveInlet.zerodeg.vy + data.AboveInlet.m60deg.vy + data.AboveInlet.p60deg.vy)/3.0; % elevation
+%w = (data.AboveInlet.zerodeg.vz + data.AboveInlet.m60deg.vz + data.AboveInlet.p60deg.vz)/3.0; % swirl
+
+iLineTemp = find (y>=yLine);
+iLine = iLineTemp(1);
+wt =  (yLine - y(iLine-1)) / (y(iLine) - y(iLine-1));
+Udat = wt*u(:,iLine-1) + (1-wt)*u(:,iLine);
+Vdat = wt*v(:,iLine-1) + (1-wt)*v(:,iLine);
+Wdat = wt*w(:,iLine-1) + (1-wt)*w(:,iLine);
+
+iLineTemp2 = find (yUnc>=yLine);
+iLine2 = iLineTemp2(1);
+wt =  (yLine - yUnc(iLine2-1)) / (yUnc(iLine2) - yUnc(iLine2-1));
+Uerr = wt*uUnc(:,iLine2-1) + (1-wt)*uUnc(:,iLine2);
+Verr = wt*vUnc(:,iLine2-1) + (1-wt)*vUnc(:,iLine2);
+Werr = wt*wUnc(:,iLine2-1) + (1-wt)*wUnc(:,iLine2);
+
+UerrDat = Udat;
+VerrDat = Vdat;
+WerrDat = Wdat;
+for i = 2:length(x)-1
+    xx = x(i);
+    jjTemp = find(xUnc>=xx);
+    jj = 0;
+    if length(jjTemp) > 0
+        jj = jjTemp(1);
+    end
+    if jj >= 2 
+       wt =  (xx - xUnc(jj-1)) / (xUnc(jj) - xUnc(jj-1));
+       UerrDat(i) = wt*Uerr(jj-1) + (1-wt)*Uerr(jj);
+       VerrDat(i) = wt*Verr(jj-1) + (1-wt)*Verr(jj);
+       WerrDat(i) = wt*Werr(jj-1) + (1-wt)*Werr(jj);
+    end
+end
+
+rad = 28.062;
+for i = 1:length(x)
+  if x(i) < -rad || x(i) > rad
+      Udat(i) = 0;
+      Vdat(i) = 0;
+      Wdat(i) = 0;
+  end
+end
+
+rad = 27.5;
+for i = 1:length(x)
+  if x(i) < -rad || x(i) > rad
+      UerrDat(i) = 0;
+      VerrDat(i) = 0;
+      WerrDat(i) = 0;
+  end
+  if UerrDat(i) ~= UerrDat(i)
+    UerrDat(i) = 0.0;
+  end
+  if VerrDat(i) ~= VerrDat(i)
+    VerrDat(i) = 0.0;
+  end
+  if WerrDat(i) ~= WerrDat(i)
+    WerrDat(i) = 0.0;
+  end
+end
+
+vLo = Vdat - VerrDat;
+vHi = Vdat + VerrDat;
+wLo = Wdat - WerrDat;
+wHi = Wdat + WerrDat;
+xT = transpose(x);
+
+
+% plots....................
+% f1: axial vel
+% f2: swirl vel
+
+figure(1)
+plot(x(1+iToss:end-iToss),Vdat(1+iToss:end-iToss),'-','LineWidth',2);
+hold on
+plot(xA{:,1},vA(:,1),'k-','LineWidth',2);
+plot(xB{:,1},vB(:,1),'-','Color',dg,'LineWidth',2);
+%plot(xB{:,1},vC(:,1),'-','Color',dr,'LineWidth',2);
+ep = patch([xT(1+iToss:end-iToss); xT(end-iToss:-1:1+iToss); xT(1+iToss)], [vLo(1+iToss:end-iToss); vHi(end-iToss:-1:1+iToss); vLo(1+iToss)], 'b');
+set(ep, 'facecolor', [0.6 0.8 1.0], 'edgecolor', 'none','FaceAlpha',0.5);
+%gcl=legend('PIV','$p=1$','$p=2$','$p=3$');
+gcl=legend('PIV','$p=1$','$p=2$');
+legend boxoff;
+fontsize(16,"points")
+ylim([-4 6]);
+xlabel('$r(mm)$','fontsize',14,'interpreter','latex');
+ylabel('$U_{axial}(m/s)$','fontsize',14,'interpreter','latex');
+set(gcl,'Interpreter','latex','Location','northeast')
+set(gca,'TickLabelInterpreter','latex')
+set(gcf,'Units','inches');
+screenposition = get(gcf,'Position');
+set(gcf,'PaperPosition',[0 0 screenposition(3:4)],'PaperSize',[screenposition(3:4)]);
+print -dpdf -vector uAxial_orders_0p0321.pdf
+
+figure(2)
+plot(x(1+iToss:end-iToss),Wdat(1+iToss:end-iToss),'LineWidth',2);
+hold on
+plot(xA{:,1},wA(:,1),'k','LineWidth',2);
+plot(xB{:,1},wB(:,1),'-','Color',dg,'LineWidth',2);
+%plot(xB{:,1},wC(:,1),'-','Color',dr,'LineWidth',2);
+ep = patch([xT(1+iToss:end-iToss); xT(end-iToss:-1:1+iToss); xT(1+iToss)], [wLo(1+iToss:end-iToss); wHi(end-iToss:-1:1+iToss); wLo(1+iToss)], 'b');
+set(ep, 'facecolor', [0.6 0.8 1.0], 'edgecolor', 'none','FaceAlpha',0.5);
+%gcl=legend('PIV','$p=1$','$p=2$','$p=3$');
+gcl=legend('PIV','$p=1$','$p=2$');
+legend boxoff;
+fontsize(16,"points")
+ylim([-25 25]);
+xlabel('$r(mm)$','fontsize',14,'interpreter','latex');
+ylabel('$U_{swirl}(m/s)$','fontsize',14,'interpreter','latex');
+set(gcl,'Interpreter','latex','Location','southwest')
+set(gca,'TickLabelInterpreter','latex')
+set(gcf,'Units','inches');
+screenposition = get(gcf,'Position');
+set(gcf,'PaperPosition',[0 0 screenposition(3:4)],'PaperSize',[screenposition(3:4)]);
+print -dpdf -vector uAzimuthal_orders_0p0321.pdf
+
+
+

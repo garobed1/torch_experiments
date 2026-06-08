@@ -1,0 +1,6 @@
+This is the uncertainty magnitudes at all points in the 3D data for each velocity component in m/s.
+The "x" file contains the radial position of each error bar and the "y" file the axial position.
+The p60, zero, and m60 files correspond to the +60, 0, and -60 degree planes that were imaged respectively
+Each of these contain a file for the uncertainties of vx (radial), vy (axial), and vz (azimuthal) components
+This time, each axial imaging station was combined into one file for simplicity
+If this complicates things since the data is broken into 4 imaging stations, I can likewise break up the uncertainty
