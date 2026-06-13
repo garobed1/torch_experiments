@@ -5,6 +5,9 @@ import os
 from util_exp import *
 import matplotlib.pyplot as plt
 
+from process_experiments import process_exp#, setup_exp
+from process_tps2d import process_tps2d
+
 # later matlab data files might just be hdf5
 
 # list of comparison plots to make, supplying settings in dict
@@ -33,19 +36,34 @@ comp_data = [
     }
 ]
 
+xlabel_map = {
+    "transverse": 'x',
+    "axial": 'y'
+}
+
 home = os.getenv('HOME')
 
+# exp settings
 file_exp = home + "/torch_experiments/pivLinesBasic/fullFlowfield"
 filenames = ['AboveInlet.mat', 'BelowStep.mat', 'AboveStep.mat', 'BelowNozzle.mat']
-
-file_3d = home + "/bedonian1/fullTorch_cold_Field_Sigfried/data.pvtu" 
-file_2d = [home + "/bedonian1/mean_tps2d_newmesh/mean_tps2d_v2_hot_down1cm/output-torch-cold-v2-rm13-3dtke-5/output-torch-colv-v2-rm13-3dtke.pvd",
-]
-
-# process experimental data (including conversion to meters)
 e_toss = 30 # piv data removal
 e_yshift = 0.138201
-e_nsamp = 2000
+
+# 3d settings
+file_3d = home + "/bedonian1/fullTorch_cold_Field_Sigfried/data.pvtu" 
+
+# 2d settings
+file_2d = [home + "/bedonian1/mean_tps2d_newmesh/mean_tps2d_v2_hot_down1cm_zetaf/output-torch-cold-v2-rm13-3dtke-4/output-torch-cold-v2-rm13-3dtke.pvd",
+]
+name_map_2d = [r'Zeta f'
+]
+color_map_2d = ['b']#, 'm', 'g']
+alpha_map_2d = [1.0]#, 1.0, 1.0]
+t2_xlim = 0.028040 # max torch radius
+t2_ylim = [0.01, 0.345] # max torch length to consider (not really applicable for transverse)
+# axi_l = 0.34 # given in the axial range or transverse loc
+
+# process experimental data (including conversion to meters)
 data_exp_ind = {}
 data_exp_dict = {}
 # for file in os.listdir(file_exp):
@@ -77,69 +95,35 @@ for file in filenames:
         data_exp_dict[file[:-4]]['velocity_y'] = (data_exp_ind[file]['zerodeg']['vy'][0][0] +  data_exp_ind[file]['p60deg']['vy'][0][0] +  data_exp_ind[file]['m60deg']['vy'][0][0])/3.0
         data_exp_dict[file[:-4]]['velocity_z'] = (data_exp_ind[file]['zerodeg']['vz'][0][0] +  data_exp_ind[file]['p60deg']['vz'][0][0] +  data_exp_ind[file]['m60deg']['vz'][0][0])/3.0
 
+# process tps2d data
+
+
 # TODO: line slicing scheme for data
 
 for comp in comp_data:
 
-    data_in_keys = []
+    e_xp, e_yp = process_exp(comp, data_exp_dict)
 
-    if comp['dir'] == "axial":
-        slice_dir = 'y'
-        loc_dir = 'x'
-        # find which datasets (multiple) we live in
+    t2_xp, t2_yp = process_tps2d(comp, file_2d, t2_xlim, t2_ylim)
 
-        # in this case, loc is in all sets, but we need to see which sets the range extends through
-        for key in data_exp_dict.keys():
-            if contains_in_range(comp['range'], data_exp_dict[key]['y'][0]):
-                if lies_in_range(comp['loc'], data_exp_dict[key]['x'][0]):
-                    data_in_keys.append(key)
-
-    elif comp['dir'] == "transverse":
-        slice_dir = 'x'
-        loc_dir = 'y'
-
-        # find which dataset we live in
-        for key in data_exp_dict.keys():
-            if lies_in_range(comp['loc'], data_exp_dict[key]['y'][0]):
-                data_in_keys.append(key)
-                break
-
-    
-    # linear interpolation of slice line
-    e_xp = []
-    e_yp = []
-    for key in data_in_keys:
-        base = data_exp_dict[key]
-        loc_ind = np.searchsorted(base[loc_dir][0], comp['loc'])
-        wt =  (comp['loc'] - base[loc_dir][0][loc_ind-1]) / (base[loc_dir][0][loc_ind] - base[loc_dir][0][loc_ind-1])
-        yw = base[comp["val"]]
-        if comp['dir'] == "axial":
-            yw = yw.T
-
-        e_xp.append(base[slice_dir][0])
-        if comp["vtype"] == "max":
-            e_yp.append(np.max(abs(yw), axis=1))
-        elif comp["vtype"] == "avg":
-            e_yp.append(np.avg(yw, axis=1))
-        else: # comp["vtype"] == "line"
-            e_yp.append(wt*yw[:,loc_ind-1] + (1-wt)*yw[:,loc_ind])
-    
-    # e_xp = np.concatenate(e_xp)
-    # e_yp = np.concatenate(e_yp)
-        # remove invalid
-        mask =  abs(e_yp[-1]) > 1e-10
-        e_xp[-1] = e_xp[-1][mask]
-        e_yp[-1] = e_yp[-1][mask]
+    # t3_xp, t3_yp = process_tps3d(comp, data_tps3d)
 
     # plot
     for i in range(len(e_xp)):
         plt.plot(e_xp[i], e_yp[i], color='k')
+    plt.plot([], [], color='k', label='Exp.')
+
+    for i in range(len(t2_xp)):
+        plt.plot(t2_xp[i], t2_yp[i], color=color_map_2d[i], label=name_map_2d[i])
+    # plt.plot([], [], color='k', label='Exp.')
 
     plt.grid()
-    plt.xlabel(f"{slice_dir} (m)")
+    plt.xlabel(f"{xlabel_map[comp['dir']]} (m)")
     plt.ylabel(f"{comp['vtype']} {comp['val']} (m/s)")
+    plt.legend()
     plt.savefig(f"plots/exp_{comp['name']}_{comp['loc']}.png", bbox_inches='tight', dpi=400)
     plt.clf()
-    breakpoint()
+
+    # breakpoint()
 
 # NOTE: next are to overlay uncertainty, and 3d/2d tps solves
