@@ -43,7 +43,7 @@ def process_exp(comp, data_exp):
         if comp["vtype"] == "max":
             e_yp.append(np.max(abs(yw), axis=1))
         elif comp["vtype"] == "avg":
-            e_yp.append(np.avg(yw, axis=1))
+            e_yp.append(np.mean(yw, axis=1))
         else: # comp["vtype"] == "line"
             e_yp.append(wt*yw[:,loc_ind-1] + (1-wt)*yw[:,loc_ind])
     
