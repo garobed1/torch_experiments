@@ -8,6 +8,7 @@ import matplotlib.pyplot as plt
 from process_experiments import process_exp#, setup_exp
 from process_exp_uncertainty import process_exp_uncertainty
 from process_tps2d import process_tps2d
+from process_tps3d import process_tps3d
 
 # later matlab data files might just be hdf5
 
@@ -21,7 +22,7 @@ comp_data = [
         "dir": "axial",                 # indicate plot along torch flow direction or transverse
         # "loc": 0.0,                      # line to slice data along
         "loc": 0.022,                      # line to slice data along
-        "range": [0., 0.34],            # line to slice data along
+        "range": [0.01, 0.34],            # line to slice data along
         "val": "velocity_z",                 # quantity to plot
         "vtype": "max"                 # max, avg, line: plot exact quant on line, or maximum/avg of transverse
     },
@@ -52,13 +53,12 @@ e_toss = 30 # piv data removal
 e_yshift = 0.138201
 
 # 3d settings
-file_3d = home + "/bedonian1/fullTorch_cold_Field_Sigfried/data.pvtu" 
+file_3d = home + "/bedonian1/tps3d_sols/fullTorch_cold_Field_Sigfried/data.pvtu" 
 
 # 2d settings
 file_2d = [home + "/bedonian1/mean_tps2d_newmesh/mean_tps2d_v2_hot_down1cm_zetaf/output-torch-cold-v2-rm13-3dtke-4/output-torch-cold-v2-rm13-3dtke.pvd",
 ]
-name_map_2d = [r'Zeta f'
-]
+name_map_2d = [r'2D v2f']
 color_map_2d = ['b']#, 'm', 'g']
 alpha_map_2d = [1.0]#, 1.0, 1.0]
 t2_xlim = 0.028040 # max torch radius
@@ -120,13 +120,14 @@ data_exp_unc_dict['velocity_z'] = (data_exp_unc_ind['zero'][0][0]['vz'][0][0] + 
 
 for comp in comp_data:
 
+    t3_xp, t3_yp = process_tps3d(comp, file_3d, t2_xlim, t2_ylim)
+
     e_xp, e_yp = process_exp(comp, data_exp_dict)
 
     _, e_up = process_exp_uncertainty(comp, e_xp, data_exp_unc_dict)
 
     t2_xp, t2_yp = process_tps2d(comp, file_2d, t2_xlim, t2_ylim)
 
-    # t3_xp, t3_yp = process_tps3d(comp, data_tps3d)
 
     # plot
     for i in range(len(e_xp)):
@@ -136,6 +137,9 @@ for comp in comp_data:
 
     for i in range(len(t2_xp)):
         plt.plot(t2_xp[i], t2_yp[i], color=color_map_2d[i], label=name_map_2d[i])
+
+    for i in range(len(t3_xp)):
+        plt.plot(t3_xp[i], t3_yp[i], color='m', label="3D LES")
     # plt.plot([], [], color='k', label='Exp.')
 
     plt.grid()
@@ -145,6 +149,6 @@ for comp in comp_data:
     plt.savefig(f"plots/exp_{comp['name']}_{comp['loc']}.png", bbox_inches='tight', dpi=400)
     plt.clf()
 
-    breakpoint()
+    # breakpoint()
 
 # NOTE: next are to overlay uncertainty, and 3d/2d tps solves
