@@ -46,7 +46,11 @@ def process_tps2d(comp, data_t2, axi_x, axi_y):
                                         [sloc, axi_y[1], 0]  ])
 
             sold = sol2g.sample_over_line(line_coords[0], line_coords[1], resolution=n_rad-1)
-            sws = np.atleast_2d(sold[val])[vind,:]
+            if val == "swirl":
+                sws = np.atleast_2d(sold[val])[vind,:]
+            else:
+                sws = np.atleast_2d(sold[val])[:,vind]
+            # breakpoint()
 
             if comp["vtype"] == "max": # should only use this for axial measurements
                 t2_yp[-1][i] = np.max(abs(sws))

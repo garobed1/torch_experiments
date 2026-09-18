@@ -60,7 +60,7 @@ def process_tps3d(comp, data_t3, axi_x, axi_y, hot = False):
             if vind == 0:
                 sws += sold[val][:,0]*np.cos(angle) + sold[val][:,2]*np.sin(angle)
             elif vind == 1:
-                sws += np.atleast_2d(sold[val])[vind,:]
+                sws += sold[val][:,1] #np.atleast_2d(sold[val])[vind,:]
             else:
                 sws += -sold[val][:,0]*np.sin(angle) + sold[val][:,2]*np.cos(angle)
         sws /= n_avg

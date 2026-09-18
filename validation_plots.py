@@ -17,6 +17,43 @@ from process_tps3d import process_tps3d
 # NOTE: don't actually seem to have the exit data, PIV goes up to below the nozzle
 # Best to ask where the coordinates actually are
 comp_data = [
+    
+    # {
+    #     "name": "exit_swirl",
+    #     "dir": "transverse",                 # indicate plot along torch flow direction or transverse
+    #     # "loc": 0.321,                       # line to slice data along
+    #     "loc": 0.265,                       # line to slice data along
+    #     "range": [0., 0.02804],             # line to slice data along
+    #     "val": "velocity_z",                 # quantity to plot
+    #     "vtype": "line"                 # max, avg, line: plot exact quant on line, or maximum/avg of transverse
+    # },
+    # {
+    #     "name": "core_swirl",
+    #     "dir": "transverse",                 # indicate plot along torch flow direction or transverse
+    #     # "loc": 0.321,                       # line to slice data along
+    #     "loc": 0.119,                       # 5mm
+    #     "range": [0., 0.02804],             # line to slice data along
+    #     "val": "velocity_z",                 # quantity to plot
+    #     "vtype": "line"                 # max, avg, line: plot exact quant on line, or maximum/avg of transverse
+    # },
+    # {
+    #     "name": "core_y",
+    #     "dir": "transverse",                 # indicate plot along torch flow direction or transverse
+    #     # "loc": 0.321,                       # line to slice data along
+    #     "loc": 0.119,                       # 5mm
+    #     "range": [0., 0.02804],             # line to slice data along
+    #     "val": "velocity_y",                 # quantity to plot
+    #     "vtype": "line"                 # max, avg, line: plot exact quant on line, or maximum/avg of transverse
+    # },
+    # {
+    #     "name": "exit_y",
+    #     "dir": "transverse",                 # indicate plot along torch flow direction or transverse
+    #     # "loc": 0.321,                       # line to slice data along
+    #     "loc": 0.265,                       # 5mm
+    #     "range": [0., 0.02804],             # line to slice data along
+    #     "val": "velocity_y",                 # quantity to plot
+    #     "vtype": "line"                 # max, avg, line: plot exact quant on line, or maximum/avg of transverse
+    # },
     {
         "name": "axial_max_swirl",
         "dir": "axial",                 # indicate plot along torch flow direction or transverse
@@ -26,21 +63,48 @@ comp_data = [
         "val": "velocity_z",                 # quantity to plot
         "vtype": "max"                 # max, avg, line: plot exact quant on line, or maximum/avg of transverse
     },
-
     {
-        "name": "exit_swirl",
-        "dir": "transverse",                 # indicate plot along torch flow direction or transverse
-        # "loc": 0.321,                       # line to slice data along
-        "loc": 0.265,                       # line to slice data along
-        "range": [0., 0.02804],             # line to slice data along
-        "val": "velocity_z",                 # quantity to plot
-        "vtype": "line"                 # max, avg, line: plot exact quant on line, or maximum/avg of transverse
-    }
+        "name": "axial_max_y",
+        "dir": "axial",                 # indicate plot along torch flow direction or transverse
+        # "loc": 0.0,                      # line to slice data along
+        "loc": 0.022,                      # line to slice data along
+        "range": [0.01, 0.34],            # line to slice data along
+        "val": "velocity_y",                 # quantity to plot
+        "vtype": "max"                 # max, avg, line: plot exact quant on line, or maximum/avg of transverse
+    },
+
+
+    # {
+    #     "name": "exit_y",
+    #     "dir": "transverse",                 # indicate plot along torch flow direction or transverse
+    #     # "loc": 0.321,                       # line to slice data along
+    #     "loc": 0.265,                       # line to slice data along
+    #     "range": [0., 0.02804],             # line to slice data along
+    #     "val": "velocity_y",                 # quantity to plot
+    #     "vtype": "line"                 # max, avg, line: plot exact quant on line, or maximum/avg of transverse
+    # }
 ]
 
+
+# universal torch coord system
+# 124 mm (axi 2d) -> 0 mm (universal)
+def tc_transform(x):
+    
+    return round(100*(x - .124))
+
 xlabel_map = {
-    "transverse": 'x',
-    "axial": 'y'
+    "transverse": 'r',
+    "axial": 'z'
+}
+
+ylabel_map_1 = {
+    "line": '',
+    "max": r'Max'
+}
+
+ylabel_map_2 = {
+    "velocity_z": r'Swirl ($u_\theta$)',
+    "velocity_y": r'Axial Vel. ($u_z$)'
 }
 
 home = os.getenv('HOME')
@@ -56,14 +120,21 @@ e_yshift = 0.138201
 file_3d = home + "/bedonian1/tps3d_sols/fullTorch_cold_Field_Sigfried/data.pvtu" 
 
 # 2d settings
-file_2d = [home + "/bedonian1/mean_tps2d_newmesh/mean_tps2d_v2_hot_down1cm_zetaf/output-torch-cold-v2-rm13-3dtke-4/output-torch-cold-v2-rm13-3dtke.pvd",
-]
-name_map_2d = [r'2D v2f']
-color_map_2d = ['b']#, 'm', 'g']
-alpha_map_2d = [1.0]#, 1.0, 1.0]
-t2_xlim = 0.028040 # max torch radius
+# file_2d = [home + "/bedonian1/mean_tps2d_newmesh/mean_tps2d_v2_hot_down1cm_zetaf/output-torch-cold-v2-rm13-3dtke-4/output-torch-cold-v2-rm13-3dtke.pvd",
+# ]
+# name_map_2d = [r'2D v2f']
+# color_map_2d = ['b']#, 'm', 'g']
+# alpha_map_2d = [1.0]#, 1.0, 1.0]
+# t2_xlim = 0.028040 # max torch radius
 t2_ylim = [0.01, 0.345] # max torch length to consider (not really applicable for transverse)
 # axi_l = 0.34 # given in the axial range or transverse loc
+
+file_2d = [home + "/bedonian1/mean_tps2d_newmesh/mean_tps2d_v2_hot_down1cm_zetaf/output-torch-cold-v2-rm13-3dtke-4/output-torch-cold-v2-rm13-3dtke.pvd", home + "/bedonian1/mean_tps2d_newmesh/mean_tps2d_cold_down1cm_turb/output-torch/output-torch.pvd"]
+name_map_2d = [r'2D v2f', r'2D algebraic']
+color_map_2d = ['b', 'r']#, 'm', 'g']
+alpha_map_2d = [1.0, 1.0] #, 1.0]
+t2_xlim = 0.028040 # max torch radius
+t2_ylim = [0.01, 0.345]
 
 # process experimental data (including conversion to meters)
 data_exp_ind = {}
@@ -128,6 +199,11 @@ for comp in comp_data:
 
     t2_xp, t2_yp = process_tps2d(comp, file_2d, t2_xlim, t2_ylim)
 
+    if comp["dir"] == "transverse":
+        plt.figure(figsize=(4.8, 4.8))
+        plt.xlim(-0.03, 0.03)
+    else:
+        plt.figure(figsize=(6.8, 4.8))
 
     # plot
     for i in range(len(e_xp)):
@@ -140,11 +216,16 @@ for comp in comp_data:
 
     for i in range(len(t3_xp)):
         plt.plot(t3_xp[i], t3_yp[i], color='m', label="3D LES")
-    # plt.plot([], [], color='k', label='Exp.')
 
     plt.grid()
+    if comp["dir"] == "transverse":
+        # plt.text(0.5*max(t2_xp[0]), 0.5*max(t2_yp[0]), f"{tc_transform(comp['loc'])} mm")
+        plt.text(0.3*max(t2_xp[0]), 0.0, f"{tc_transform(comp['loc'])} mm")
+        ym = max([abs(max(t3_yp[0])), abs(min(t3_yp[0]))])
+        plt.ylim([-1.1*ym, 1.1*ym])
     plt.xlabel(f"{xlabel_map[comp['dir']]} (m)")
-    plt.ylabel(f"{comp['vtype']} {comp['val']} (m/s)")
+    # plt.ylabel(f"{comp['vtype']} {comp['val']} (m/s)")
+    plt.ylabel(f"{ylabel_map_1[comp['vtype']]} {ylabel_map_2[comp['val']]} (m/s)")
     plt.legend()
     plt.savefig(f"plots/exp_{comp['name']}_{comp['loc']}.png", bbox_inches='tight', dpi=400)
     plt.clf()
